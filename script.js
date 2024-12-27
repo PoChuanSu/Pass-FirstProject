@@ -93,14 +93,14 @@ btn.addEventListener("click", function () {
 // console.log(calcFactAgeArrow(2025));
 
 // array
-const fact = ["Lisbon is the capital of Portugal", 1234, false];
+// const fact = ["Lisbon is the capital of Portugal", 1234, false];
 
-const [text1, number, isFalse] = fact;
+// const [text1, number, isFalse] = fact;
 
-console.log(fact);
+// console.log(fact);
 
-let popElement = fact.shift();
-console.log(fact);
+// let popElement = fact.shift();
+// console.log(fact);
 
-fact.unshift("Lisbon is the capital of Portugal");
-console.log(fact);
+// fact.unshift("Lisbon is the capital of Portugal");
+// console.log(fact);
