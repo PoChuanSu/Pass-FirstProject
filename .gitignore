@@ -1,0 +1,3 @@
+#exclude depencies
+/node_modules
+.DS_Store
