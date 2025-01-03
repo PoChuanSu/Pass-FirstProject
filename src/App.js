@@ -1,78 +1,146 @@
 import "./style.css";
-import { useState } from "react";
-
-function Counter() {
-    const [count, setCount] = useState(0);
-
-    return (
-        <div>
-            <span style={{ fontSize: "40px" }}>{count}</span>
-            <button
-                className="btn btn-large btn-open"
-                onClick={() => setCount(count + 1)}
-            >
-                +1
-            </button>
-        </div>
-    );
-}
-
-const initialFacts = [
-    {
-        id: 1,
-        text: "React is being developed by Meta (formerly facebook)",
-        source: "https://opensource.fb.com/",
-        category: "technology",
-        votesInteresting: 24,
-        votesMindblowing: 9,
-        votesFalse: 4,
-        createdIn: 2021,
-    },
-    {
-        id: 2,
-        text: "Millennial dads spend 3 times as much time with their kids than their fathers spent with them. In 1982, 43% of fathers had never changed a diaper. Today, that number is down to 3%",
-        source: "https://www.mother.ly/parenting/millennial-dads-spend-more-time-with-their-kids",
-        category: "health",
-        votesInteresting: 11,
-        votesMindblowing: 5,
-        votesFalse: 0,
-        createdIn: 2019,
-    },
-    {
-        id: 3,
-        text: "Lisbon is the capital of Portugal",
-        source: "https://en.wikipedia.org/wiki/Lisbon",
-        category: "society",
-        votesInteresting: 8,
-        votesMindblowing: 3,
-        votesFalse: 1,
-        createdIn: 2015,
-    },
-];
+import { useEffect, useState } from "react";
+import supabase from "./superbase";
 
 function App() {
-    const appTitle = "Today I Learned";
+    const [showForm, setShowForm] = useState(false);
+    const [facts, setFacts] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(function () {
+        async function getFacts() {
+            setIsLoading(true);
+
+            let { data: facts, error } = await supabase
+                .from("facts")
+                .select("*")
+                .order("votesInteresting", { ascending: false })
+                .limit(1000);
+
+            if (!error) setFacts(facts);
+            else alert("There was a problem getting data");
+            setIsLoading(false);
+        }
+
+        getFacts();
+    }, []);
+
     return (
         <>
-            <header className="header">
-                <div className="logo">
-                    <img src="logo.png" alt="Today I learned Logo" />
-                    <h1>{appTitle}</h1>
-                </div>
-                <button className="btn btn-large btn-open">Share a fact</button>
-            </header>
-            <Counter />
-            <NewFactForm />
+            <Headers showForm={showForm} setShowForm={setShowForm} />
+            {showForm ? (
+                <NewFactForm setFacts={setFacts} setShowForm={setShowForm} />
+            ) : null}
             <main className="main">
                 <CategoryFilter />
-                <FactList />
+                {isLoading ? <Loader /> : <FactList facts={facts} />}
             </main>
         </>
     );
 }
 
-function NewFactForm() {
-    return <form className="fact-form">Fact form</form>;
+function Loader() {
+    return <p className="message">Loading ...</p>;
+}
+
+function Headers({ showForm, setShowForm }) {
+    const appTitle = "Today I Learned";
+    return (
+        <header className="header">
+            <div className="logo">
+                <img src="logo.png" alt="Today I learned Logo" />
+                <h1>{appTitle}</h1>
+            </div>
+            <button
+                className="btn btn-large btn-open"
+                onClick={() => setShowForm((show) => !show)}
+            >
+                {showForm ? "Close form" : "Share a fact"}
+            </button>
+        </header>
+    );
+}
+
+function isValidHttpUrl(string) {
+    let url;
+
+    try {
+        url = new URL(string);
+    } catch (_) {
+        return false;
+    }
+
+    return url.protocol === "http:" || url.protocol === "https:";
+}
+
+function NewFactForm({ setFacts, setShowForm }) {
+    const [text, setText] = useState("");
+    const [source, setSource] = useState("http://example.com");
+    const [category, setCategory] = useState("");
+
+    const textLength = text.length;
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        console.log(text, source, category);
+
+        if (text && isValidHttpUrl(source) && category && textLength <= 200) {
+            const newFact = {
+                id: Math.round(Math.random() * 1000),
+                text,
+                source,
+                category,
+                votesInteresting: 0,
+                votesMindblowing: 0,
+                votesFalse: 0,
+                createdIn: new Date().getFullYear(),
+            };
+
+            setFacts((facts) => [newFact, ...facts]);
+
+            setText("");
+            setSource("");
+            setCategory("");
+
+            setShowForm(false);
+        }
+    }
+
+    return (
+        <form className="fact-form" onSubmit={handleSubmit}>
+            <input
+                type="text"
+                placeholder="Share a fact with the world..."
+                value={text}
+                onChange={(e) => {
+                    setText(e.target.value);
+                }}
+            />
+            <span>{200 - textLength} characters left</span>
+            <input
+                type="text"
+                placeholder="Trustworthy source..."
+                value={source}
+                onChange={(e) => {
+                    setSource(e.target.value);
+                }}
+            />
+            <select
+                value={category}
+                onChange={(e) => {
+                    setCategory(e.target.value);
+                }}
+            >
+                <option value="">Choose Category</option>
+                {CATEGORIES.map((cat) => (
+                    <option key={cat.name} value={cat.name}>
+                        {cat.name.toUpperCase()}
+                    </option>
+                ))}
+            </select>
+            <button className="btn btn-large">Post</button>
+        </form>
+    );
 }
 
 const CATEGORIES = [
@@ -108,8 +176,8 @@ function CategoryFilter() {
     );
 }
 
-function FactList() {
-    const facts = initialFacts;
+function FactList({ facts }) {
+    // const facts = initialFacts;
 
     return (
         <section>
