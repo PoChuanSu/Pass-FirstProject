@@ -181,6 +181,16 @@ h1 {
     background-color: #292524;
 }
 
+.vote-buttons button:disabled {
+    background-color: #656361;
+}
+
+.disputed {
+    color: #ef4444;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
 ul {
     list-style: none;
 }
